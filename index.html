@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Paulo Gaspar · Workshop</title>
+        <meta name="description" content="What have I done? — by Paulo Gaspar." />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                /* Archival paper — a warm pressroom catalogue, ink on stock */
+                --paper: #f3eee1;
+                --paper-2: #ece5d4;
+                --ink: #1c1a16;
+                --ink-soft: #4a463d;
+                --faint: #8a8475;
+                --rule: #cbc3ae;
+                --rule-soft: #ddd6c4;
+                /* One bold accent: pressroom vermilion */
+                --red: #d63a1e;
+                --red-ink: #a32c14;
+                --red-wash: rgba(214, 58, 30, 0.08);
+
+                --display: "Fraunces", Georgia, "Times New Roman", serif;
+                --body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+                --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+                --edge: clamp(20px, 5vw, 88px);
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+            html {
+                -webkit-text-size-adjust: 100%;
+                scroll-behavior: smooth;
+            }
+            body {
+                margin: 0;
+                background-color: var(--paper);
+                /* layered paper grain + a faint top vignette */
+                background-image:
+                    radial-gradient(140% 90% at 50% -20%, rgba(255, 252, 244, 0.7) 0%, transparent 55%),
+                    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+                color: var(--ink);
+                font-family: var(--body);
+                font-size: 16px;
+                line-height: 1.6;
+                -webkit-font-smoothing: antialiased;
+                text-rendering: optimizeLegibility;
+            }
+
+            .wrap {
+                max-width: 1080px;
+                margin: 0 auto;
+                padding: 0 var(--edge);
+            }
+
+            a {
+                color: inherit;
+            }
+
+            /* ---------- Top ledger bar ---------- */
+            .topbar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 16px;
+                padding: 22px 0 18px;
+                font-family: var(--mono);
+                font-size: 11.5px;
+                letter-spacing: 0.16em;
+                text-transform: uppercase;
+                color: var(--faint);
+                border-bottom: 1px solid var(--rule);
+            }
+            .topbar .dot {
+                color: var(--red);
+            }
+            .topbar a {
+                text-decoration: none;
+                transition: color 0.18s;
+            }
+            .topbar a:hover {
+                color: var(--ink);
+            }
+
+            /* ---------- Masthead ---------- */
+            header.mast {
+                padding: clamp(48px, 9vw, 120px) 0 clamp(40px, 6vw, 76px);
+                position: relative;
+            }
+            .kicker {
+                font-family: var(--mono);
+                font-size: 12px;
+                letter-spacing: 0.34em;
+                text-transform: uppercase;
+                color: var(--red-ink);
+                margin: 0 0 26px;
+                display: flex;
+                align-items: center;
+                gap: 14px;
+            }
+            .kicker::before {
+                content: "";
+                width: clamp(28px, 6vw, 64px);
+                height: 2px;
+                background: var(--red);
+            }
+            h1.title {
+                font-family: var(--display);
+                font-optical-sizing: auto;
+                font-weight: 500;
+                font-size: clamp(52px, 13vw, 168px);
+                line-height: 0.9;
+                letter-spacing: -0.02em;
+                margin: 0;
+                color: var(--ink);
+            }
+            h1.title em {
+                font-style: italic;
+                font-weight: 400;
+                color: var(--red);
+            }
+            .lede {
+                margin: clamp(28px, 4vw, 44px) 0 0;
+                max-width: 46ch;
+                font-size: clamp(17px, 2.2vw, 21px);
+                line-height: 1.55;
+                color: var(--ink-soft);
+            }
+            .lede strong {
+                color: var(--ink);
+                font-weight: 600;
+            }
+
+            /* ---------- Section heading ---------- */
+            .section-head {
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
+                gap: 16px;
+                padding-bottom: 16px;
+                border-bottom: 2px solid var(--ink);
+                margin-bottom: 4px;
+            }
+            .section-head h2 {
+                font-family: var(--mono);
+                font-size: 13px;
+                font-weight: 600;
+                letter-spacing: 0.22em;
+                text-transform: uppercase;
+                margin: 0;
+            }
+            .section-head .count {
+                font-family: var(--mono);
+                font-size: 13px;
+                letter-spacing: 0.1em;
+                color: var(--faint);
+            }
+
+            /* ---------- Project ledger ---------- */
+            .ledger {
+                list-style: none;
+                margin: 0 0 clamp(60px, 10vw, 120px);
+                padding: 0;
+            }
+            .entry {
+                position: relative;
+                display: grid;
+                grid-template-columns: minmax(56px, 0.7fr) minmax(0, 4fr) auto;
+                gap: clamp(16px, 4vw, 56px);
+                align-items: start;
+                padding: clamp(30px, 4.5vw, 52px) clamp(12px, 2vw, 26px);
+                border-bottom: 1px solid var(--rule);
+                text-decoration: none;
+                color: inherit;
+                transition:
+                    background-color 0.3s ease,
+                    padding-left 0.3s ease;
+            }
+            .entry::before {
+                /* sliding accent edge on hover */
+                content: "";
+                position: absolute;
+                left: 0;
+                top: -1px;
+                bottom: -1px;
+                width: 3px;
+                background: var(--red);
+                transform: scaleY(0);
+                transform-origin: top;
+                transition: transform 0.32s cubic-bezier(0.2, 0.7, 0.2, 1);
+            }
+            .entry:hover,
+            .entry:focus-visible {
+                background: var(--red-wash);
+                padding-left: clamp(20px, 3vw, 40px);
+                outline: none;
+            }
+            .entry:hover::before,
+            .entry:focus-visible::before {
+                transform: scaleY(1);
+            }
+
+            .entry .idx {
+                font-family: var(--display);
+                font-weight: 400;
+                font-size: clamp(34px, 6vw, 60px);
+                line-height: 0.9;
+                color: var(--rule);
+                transition: color 0.3s ease;
+                font-variant-numeric: tabular-nums;
+            }
+            .entry:hover .idx,
+            .entry:focus-visible .idx {
+                color: var(--red);
+            }
+
+            .entry .body {
+                min-width: 0;
+            }
+            .entry .name {
+                font-family: var(--display);
+                font-weight: 500;
+                font-size: clamp(28px, 4.4vw, 46px);
+                line-height: 1.02;
+                letter-spacing: -0.015em;
+                margin: 0 0 4px;
+                display: inline-flex;
+                align-items: baseline;
+                gap: 14px;
+            }
+            .entry .name .arrow {
+                font-family: var(--body);
+                font-size: 0.5em;
+                color: var(--red);
+                transform: translateX(-6px);
+                opacity: 0;
+                transition:
+                    transform 0.3s ease,
+                    opacity 0.3s ease;
+            }
+            .entry:hover .name .arrow,
+            .entry:focus-visible .name .arrow {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            .entry .synopsis {
+                margin: 14px 0 0;
+                max-width: 56ch;
+                font-size: clamp(15px, 1.7vw, 17px);
+                color: var(--ink-soft);
+                line-height: 1.6;
+            }
+            .entry .tags {
+                margin: 20px 0 0;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px 8px;
+                padding: 0;
+                list-style: none;
+            }
+            .entry .tags li {
+                font-family: var(--mono);
+                font-size: 11px;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--ink-soft);
+                border: 1px solid var(--rule);
+                border-radius: 999px;
+                padding: 4px 11px;
+                background: rgba(255, 255, 255, 0.35);
+            }
+
+            .entry .meta {
+                font-family: var(--mono);
+                font-size: 11.5px;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--faint);
+                text-align: right;
+                line-height: 1.9;
+                white-space: nowrap;
+            }
+            .entry .meta b {
+                color: var(--ink);
+                font-weight: 600;
+            }
+            .entry .meta .live {
+                color: var(--red-ink);
+            }
+            .entry .meta .live::before {
+                content: "● ";
+                font-size: 0.8em;
+                vertical-align: middle;
+            }
+
+            /* ---------- Colophon / footer ---------- */
+            footer.colophon {
+                border-top: 2px solid var(--ink);
+                padding: clamp(40px, 6vw, 72px) 0 clamp(48px, 7vw, 90px);
+                display: grid;
+                grid-template-columns: 1.4fr 1fr;
+                gap: clamp(28px, 5vw, 64px);
+            }
+            footer .about p {
+                margin: 0;
+                max-width: 42ch;
+                font-size: 15px;
+                color: var(--ink-soft);
+            }
+            footer .about .sig {
+                font-family: var(--display);
+                font-style: italic;
+                font-size: 26px;
+                color: var(--ink);
+                margin-bottom: 10px;
+            }
+            footer .links {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+                align-items: flex-start;
+            }
+            footer .links .lab {
+                font-family: var(--mono);
+                font-size: 11px;
+                letter-spacing: 0.2em;
+                text-transform: uppercase;
+                color: var(--faint);
+                margin-bottom: 12px;
+            }
+            footer .links a {
+                font-family: var(--display);
+                font-size: 21px;
+                text-decoration: none;
+                color: var(--ink);
+                padding: 3px 0;
+                position: relative;
+                transition: color 0.18s;
+            }
+            footer .links a::after {
+                content: "→";
+                font-family: var(--body);
+                font-size: 0.7em;
+                margin-left: 8px;
+                color: var(--red);
+                opacity: 0;
+                transform: translateX(-6px);
+                display: inline-block;
+                transition:
+                    opacity 0.2s,
+                    transform 0.2s;
+            }
+            footer .links a:hover {
+                color: var(--red-ink);
+            }
+            footer .links a:hover::after {
+                opacity: 1;
+                transform: translateX(0);
+            }
+
+            .endmark {
+                text-align: center;
+                font-family: var(--mono);
+                font-size: 11px;
+                letter-spacing: 0.18em;
+                text-transform: uppercase;
+                color: var(--faint);
+                padding-bottom: 40px;
+            }
+            .endmark .dot {
+                color: var(--red);
+            }
+
+            /* ---------- Entrance animation ---------- */
+            @keyframes rise {
+                from {
+                    opacity: 0;
+                    transform: translateY(18px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .reveal {
+                opacity: 0;
+                animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+            }
+            .d1 {
+                animation-delay: 0.05s;
+            }
+            .d2 {
+                animation-delay: 0.16s;
+            }
+            .d3 {
+                animation-delay: 0.27s;
+            }
+            .d4 {
+                animation-delay: 0.38s;
+            }
+            .d5 {
+                animation-delay: 0.5s;
+            }
+
+            /* ---------- Responsive ---------- */
+            @media (max-width: 720px) {
+                .entry {
+                    grid-template-columns: auto 1fr;
+                    gap: 14px 20px;
+                }
+                .entry .meta {
+                    grid-column: 1 / -1;
+                    text-align: left;
+                    margin-top: 18px;
+                    line-height: 1.7;
+                }
+                footer.colophon {
+                    grid-template-columns: 1fr;
+                }
+            }
+            @media (prefers-reduced-motion: reduce) {
+                * {
+                    animation: none !important;
+                    transition: none !important;
+                    scroll-behavior: auto !important;
+                }
+                .reveal {
+                    opacity: 1;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <nav class="topbar">
+                <span><span class="dot">●</span>&nbsp; Paulo&nbsp;Gaspar — Workshop</span>
+                <a href="https://github.com/paulogaspar7">github.com/paulogaspar7 ↗</a>
+            </nav>
+
+            <header class="mast">
+                <p class="kicker reveal d1">My Tools & Toys · GitHub Pages</p>
+                <h1 class="title reveal d2">What have I <em>done</em>?</h1>
+                <p class="lede reveal d3">Click and use.</p>
+            </header>
+
+            <main>
+                <div class="section-head reveal d4">
+                    <h2>The Index</h2>
+                    <span class="count">01 / 01</span>
+                </div>
+
+                <ul class="ledger reveal d5">
+                    <li>
+                        <a class="entry" href="./downsizer/">
+                            <span class="idx" aria-hidden="true">01</span>
+                            <span class="body">
+                                <span class="name">Downsizer <span class="arrow" aria-hidden="true">↗</span></span>
+                                <p class="synopsis">
+                                    A picture-desk batch image resizer. Drop in a pile of photos, cap their longest
+                                    side, and it downscales each one with stepped halving for clean results — then saves
+                                    the lot to a folder you pick. Everything happens locally; your images never leave
+                                    the machine.
+                                </p>
+                                <ul class="tags">
+                                    <li>Image tool</li>
+                                    <li>Canvas</li>
+                                    <li>Drag &amp; drop</li>
+                                    <li>100% client-side</li>
+                                </ul>
+                            </span>
+                            <span class="meta">
+                                <span class="live">Live</span><br />
+                                <b>PNG · JPEG · WebP</b><br />
+                                Single page
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+            </main>
+
+            <footer class="colophon">
+                <div class="about">
+                    <p class="sig">— P.G.</p>
+                    <p>
+                        I build infrastructure and the occasional small, sharp tool. This page is the front door to the
+                        ones worth sharing. More will land here over time.
+                    </p>
+                </div>
+                <div class="links">
+                    <span class="lab">Elsewhere</span>
+                    <a href="https://github.com/paulogaspar7">GitHub</a>
+                    <a href="./downsizer/">Downsizer</a>
+                </div>
+            </footer>
+
+            <p class="endmark">· No trackers · <span class="dot">●</span> End of index</p>
+        </div>
+    </body>
+</html>

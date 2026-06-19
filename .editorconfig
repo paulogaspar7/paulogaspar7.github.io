@@ -1,0 +1,29 @@
+# EditorConfig — https://editorconfig.org
+# Top-most config; stop searching parent directories.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+max_line_length = 120
+
+# Markup, styles and scripts
+[*.{html,css,js,mjs,cjs,ts,json,jsonc}]
+indent_size = 4
+
+# Data / config files conventionally use 2-space indentation
+[*.{yml,yaml,toml}]
+indent_size = 2
+
+# Markdown: keep trailing whitespace (two spaces = hard line break) and don't wrap
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
+
+# Makefiles require real tabs
+[Makefile]
+indent_style = tab
