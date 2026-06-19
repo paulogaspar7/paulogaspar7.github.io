@@ -353,7 +353,7 @@
         and was run with <b>Claude&nbsp;Opus&nbsp;4.5</b> as the orchestrator. Both marketplaces in this repository
         must be installed: <b>common</b> (shared documentation &amp; validation tooling) and <b>jmod</b>
         (the Java Services Modernization pipeline, which depends on Common). The batch variant additionally needs
-        the experimental <span class="mono">Agent&nbsp;Teams</span> feature enabled.
+        the <span class="mono">Agent&nbsp;Teams</span> feature, which was experimental on earlier Claude Code versions.
       </p>
     </div>
   </section>
@@ -588,14 +588,12 @@
     <div class="grid g3">
       <div class="card reveal"><div class="edge gd"></div><span class="tag">plugins</span><h3>common + jmod</h3><p>Install both marketplaces from this repo. <span class="mono">jmod</span> depends on <span class="mono">common</span> for shared documentation &amp; validation tooling.</p></div>
       <div class="card reveal"><div class="edge ga"></div><span class="tag">model</span><h3>Claude Opus 4.5</h3><p>The orchestrator was run on Opus&nbsp;4.5. Implementation agents use Opus; read-only detectors use haiku.</p></div>
-      <div class="card reveal"><div class="edge gb"></div><span class="tag">batch only</span><h3>Agent Teams</h3><p><span class="mono">/modernize-all-services</span> needs the experimental Agent&nbsp;Teams feature enabled before launch.</p></div>
+      <div class="card reveal"><div class="edge gb"></div><span class="tag">batch only</span><h3>Agent Teams</h3><p><span class="mono">/modernize-all-services</span> needs the Agent&nbsp;Teams feature.</p></div>
     </div>
 
     <pre class="block reveal"><span class="c"># Single service — full modernization pipeline</span>
 <span class="k">/jmod:modernize-service</span> <span class="s">ubag</span>
 
-<span class="c"># Whole fleet — requires the experimental Agent Teams feature</span>
-<span class="k">export</span> CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=<span class="s">1</span>   <span class="c"># set before starting Claude Code</span>
 <span class="k">/jmod:modernize-all-services</span> <span class="s">ubag ucontent uauditing</span>
 <span class="c"># …or describe the set:  "all u* services in /path/to/uservices"</span>
 
