@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>modernize-service · Workflow Blueprint</title>
+<meta name="description" content="How the /jmod:modernize-service Claude Code command orchestrates a full Spring Boot service modernization — and how /jmod:modernize-all-services scales it across a fleet.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0c0e12;
+    --bg-2:#10131a;
+    --panel:#161a22;
+    --panel-2:#1c212b;
+    --line:#2a313d;
+    --line-soft:#222936;
+    --ink:#e9ecf1;
+    --ink-dim:#9aa4b2;
+    --ink-faint:#69727f;
+    --amber:#ffb02e;
+    --amber-deep:#f0871f;
+    --cyan:#39d7c4;
+    --violet:#b394ff;
+    --green:#5ad98c;
+    --red:#ff5d6c;
+    --grey:#7c8694;
+    --radius:14px;
+    --mw:1120px;
+    --shadow:0 24px 60px -28px rgba(0,0,0,.85);
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    color:var(--ink);
+    background:var(--bg);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+
+  /* ---- blueprint atmosphere ---- */
+  body::before{
+    content:"";
+    position:fixed; inset:0; z-index:-2;
+    background:
+      radial-gradient(1100px 620px at 78% -8%, rgba(255,176,46,.13), transparent 60%),
+      radial-gradient(900px 600px at 8% 6%, rgba(57,215,196,.09), transparent 60%),
+      var(--bg);
+  }
+  body::after{
+    content:"";
+    position:fixed; inset:0; z-index:-1; opacity:.5;
+    background-image:
+      linear-gradient(var(--line-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+    background-size:46px 46px;
+    -webkit-mask-image:radial-gradient(ellipse 100% 80% at 50% 0%, #000 0%, transparent 80%);
+            mask-image:radial-gradient(ellipse 100% 80% at 50% 0%, #000 0%, transparent 80%);
+  }
+
+  a{color:var(--cyan);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* ---- top nav ---- */
+  header.nav{
+    position:sticky; top:0; z-index:40;
+    backdrop-filter:blur(10px);
+    background:rgba(12,14,18,.72);
+    border-bottom:1px solid var(--line-soft);
+  }
+  .nav-inner{
+    max-width:var(--mw); margin:0 auto; padding:13px 24px;
+    display:flex; align-items:center; gap:18px;
+  }
+  .brand{
+    font-family:"Chakra Petch",sans-serif; font-weight:700;
+    letter-spacing:.06em; font-size:.92rem; color:var(--ink);
+    display:flex; align-items:center; gap:10px; white-space:nowrap;
+  }
+  .brand .dot{width:9px;height:9px;border-radius:2px;background:var(--amber);box-shadow:0 0 12px var(--amber)}
+  .nav-links{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}
+  .nav-links a{
+    font-family:"IBM Plex Mono",monospace; font-size:.74rem; letter-spacing:.04em;
+    color:var(--ink-dim); padding:6px 10px; border-radius:8px; text-transform:uppercase;
+  }
+  .nav-links a:hover{color:var(--ink);background:var(--panel);text-decoration:none}
+
+  main{max-width:var(--mw);margin:0 auto;padding:0 24px}
+
+  /* ---- hero ---- */
+  .hero{padding:64px 0 26px}
+  .kicker{
+    font-family:"IBM Plex Mono",monospace; font-size:.76rem; letter-spacing:.34em;
+    text-transform:uppercase; color:var(--amber); margin:0 0 18px;
+  }
+  h1{
+    font-family:"Chakra Petch",sans-serif; font-weight:700;
+    font-size:clamp(2.3rem,6vw,4.1rem); line-height:1.02; margin:0;
+    letter-spacing:-.01em;
+  }
+  h1 .code{color:var(--amber)}
+  .lede{
+    margin:22px 0 0; max-width:62ch; font-size:1.08rem; color:var(--ink-dim);
+  }
+  .lede strong{color:var(--ink);font-weight:600}
+
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+  .chip{
+    font-family:"IBM Plex Mono",monospace; font-size:.74rem; letter-spacing:.02em;
+    border:1px solid var(--line); background:var(--panel);
+    padding:7px 13px; border-radius:999px; color:var(--ink-dim);
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .chip b{color:var(--ink);font-weight:600}
+  .chip .led{width:7px;height:7px;border-radius:50%}
+  .led.a{background:var(--amber)} .led.c{background:var(--cyan)} .led.v{background:var(--violet)} .led.g{background:var(--green)}
+
+  /* ---- compatibility banner ---- */
+  .compat{
+    margin:30px 0 8px; display:flex; gap:14px; align-items:flex-start;
+    border:1px solid var(--line); border-left:3px solid var(--amber);
+    background:linear-gradient(90deg, rgba(255,176,46,.07), transparent 70%);
+    padding:14px 18px; border-radius:10px;
+  }
+  .compat .ic{font-family:"Chakra Petch";color:var(--amber);font-size:1.1rem;line-height:1.4}
+  .compat p{margin:0;font-size:.9rem;color:var(--ink-dim)}
+  .compat b{color:var(--ink)}
+
+  /* ---- sections ---- */
+  section{padding:52px 0;border-top:1px solid var(--line-soft)}
+  .sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:8px;flex-wrap:wrap}
+  .sec-num{
+    font-family:"IBM Plex Mono",monospace;font-size:.8rem;color:var(--amber);
+    letter-spacing:.1em;border:1px solid var(--line);border-radius:7px;padding:3px 9px;
+  }
+  h2{
+    font-family:"Chakra Petch",sans-serif;font-weight:600;
+    font-size:clamp(1.5rem,3.4vw,2.15rem);margin:0;letter-spacing:.005em;
+  }
+  .sec-sub{color:var(--ink-dim);max-width:70ch;margin:14px 0 0;font-size:1rem}
+
+  /* ---- diagram frame ---- */
+  .diagram{
+    position:relative;margin:30px 0 0;
+    width:94vw;max-width:94vw;
+    margin-left:calc(50% - 47vw);margin-right:calc(50% - 47vw);
+    border:1px solid var(--line);border-radius:var(--radius);
+    background:
+      linear-gradient(180deg, rgba(28,33,43,.6), rgba(18,21,28,.9));
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .diagram .bar{
+    display:flex;align-items:center;gap:9px;
+    padding:11px 16px;border-bottom:1px solid var(--line-soft);
+    background:rgba(10,12,16,.5);
+  }
+  .diagram .bar .tt{
+    font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink-faint);margin-left:6px;
+  }
+  .diagram .bar i{width:11px;height:11px;border-radius:50%;display:inline-block}
+  .diagram .bar i:nth-child(1){background:#ff5f57}
+  .diagram .bar i:nth-child(2){background:#febc2e}
+  .diagram .bar i:nth-child(3){background:#28c840}
+  .diagram .canvas{padding:22px 18px 26px;overflow-x:auto;overflow-y:hidden}
+  svg.wf{display:block;margin-inline:auto;height:auto}
+
+  /* ---- inline-SVG diagram theming ---- */
+  .wf text{font-family:"IBM Plex Mono",monospace}
+  .wf .lbl{font-size:12.5px;fill:var(--ink)}
+  .wf .lbl .sub{font-size:11px;opacity:.62}
+  .wf .lbl .strong{font-weight:600}
+  .wf .box{fill:var(--panel-2);stroke:var(--line);stroke-width:1.4}
+  .wf .edge{fill:none;stroke:var(--ink-faint);stroke-width:1.7}
+  .wf .edge.dashed{stroke:var(--grey);stroke-dasharray:5 5}
+  .wf #wf-arrow path{fill:var(--ink-faint)}
+  .wf #wf-arrow-d path{fill:var(--grey)}
+  .wf .elabel{font-size:11px;fill:var(--ink-dim)}
+  .wf .elabel-bg{fill:#0c0e12;opacity:.92}
+  .wf .band{fill:#11151c;stroke:#2a313d;stroke-width:1.2}
+  .wf .band-label{font-size:12px;letter-spacing:.14em;fill:var(--ink-faint)}
+  .wf .n-io  .box{fill:#13242a;stroke:var(--cyan)}      .wf .n-io  .lbl{fill:#bdeee6}
+  .wf .n-p0  .box{fill:#1b212c;stroke:var(--grey)}      .wf .n-p0  .lbl{fill:#cdd5df}
+  .wf .n-ga  .box{fill:#2a2009;stroke:var(--amber)}     .wf .n-ga  .lbl{fill:#ffe0a6}
+  .wf .n-gb  .box{fill:#0c2622;stroke:var(--cyan)}      .wf .n-gb  .lbl{fill:#abeee3}
+  .wf .n-gc  .box{fill:#0c2414;stroke:var(--green)}     .wf .n-gc  .lbl{fill:#a9eec0}
+  .wf .n-gd  .box{fill:#1e1733;stroke:var(--violet)}    .wf .n-gd  .lbl{fill:#d2c2ff}
+  .wf .n-fin .box{fill:#33230c;stroke:var(--amber-deep)}.wf .n-fin .lbl{fill:#ffcf9a}
+  .wf .n-neu .box{fill:#1b212c;stroke:var(--line)}      .wf .n-neu .lbl{fill:#d3dae3}
+  .wf .n-ok  .box{fill:#0c2414;stroke:var(--green)}     .wf .n-ok  .lbl{fill:#a9eec0}
+  .wf .n-bad .box{fill:#2a1014;stroke:var(--red)}       .wf .n-bad .lbl{fill:#ffb3bb}
+  .wf .n-warn .box{fill:#2a2009;stroke:var(--amber)}    .wf .n-warn .lbl{fill:#ffe0a6}
+  .wf .n-skip .box{fill:#1b212c;stroke:var(--grey)}     .wf .n-skip .lbl{fill:#cdd5df}
+  .wf .band-p0 .band{fill:rgba(124,134,148,.05);stroke:rgba(124,134,148,.34)} .wf .band-p0 .band-label{fill:#aab3bf}
+  .wf .band-ga .band{fill:rgba(255,176,46,.05);stroke:rgba(255,176,46,.34)}   .wf .band-ga .band-label{fill:#ffce7a}
+  .wf .band-gb .band{fill:rgba(57,215,196,.05);stroke:rgba(57,215,196,.32)}   .wf .band-gb .band-label{fill:#8fe9dd}
+  .wf .band-gc .band{fill:rgba(90,217,140,.05);stroke:rgba(90,217,140,.3)}    .wf .band-gc .band-label{fill:#9fe9b8}
+  .wf .band-gd .band{fill:rgba(179,148,255,.05);stroke:rgba(179,148,255,.3)}  .wf .band-gd .band-label{fill:#cdbcff}
+
+  .legend{
+    display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:18px;
+    font-family:"IBM Plex Mono",monospace;font-size:.74rem;color:var(--ink-dim);
+  }
+  .legend span{display:inline-flex;align-items:center;gap:8px}
+  .legend .sw{width:13px;height:13px;border-radius:3px;border:1px solid rgba(255,255,255,.18)}
+  .sw.ga{background:#3a2a0d}.sw.gb{background:#0b2a26}.sw.gc{background:#0d2818}.sw.gd{background:#241a3a}.sw.p0{background:#1c2230}
+
+  /* ---- cards grid ---- */
+  .grid{display:grid;gap:16px;margin-top:26px}
+  .grid.g2{grid-template-columns:repeat(2,1fr)}
+  .grid.g3{grid-template-columns:repeat(3,1fr)}
+  .grid.g4{grid-template-columns:repeat(4,1fr)}
+  .card{
+    border:1px solid var(--line);border-radius:12px;background:var(--panel);
+    padding:18px 18px 16px;position:relative;overflow:hidden;
+    transition:border-color .25s ease, transform .25s ease;
+  }
+  .card:hover{border-color:var(--amber);transform:translateY(-3px)}
+  .card .tag{
+    font-family:"IBM Plex Mono",monospace;font-size:.68rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ink-faint);
+  }
+  .card h3{
+    font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:1.05rem;
+    margin:6px 0 8px;color:var(--ink);
+  }
+  .card p{margin:0;font-size:.9rem;color:var(--ink-dim)}
+  .card .edge{position:absolute;left:0;top:0;bottom:0;width:3px}
+  .edge.p0{background:var(--grey)} .edge.ga{background:var(--amber)} .edge.gb{background:var(--cyan)}
+  .edge.gc{background:var(--green)} .edge.gd{background:var(--violet)} .edge.fin{background:var(--amber-deep)}
+
+  /* ---- table ---- */
+  .table-wrap{margin-top:26px;border:1px solid var(--line);border-radius:12px;overflow:hidden;overflow-x:auto}
+  table{border-collapse:collapse;width:100%;min-width:680px;font-size:.88rem}
+  thead th{
+    font-family:"IBM Plex Mono",monospace;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
+    text-align:left;color:var(--ink-faint);background:var(--bg-2);padding:13px 14px;
+    border-bottom:1px solid var(--line);white-space:nowrap;
+  }
+  tbody td{padding:12px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top;color:var(--ink-dim)}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover td{background:rgba(255,255,255,.02)}
+  td .op{color:var(--ink);font-weight:600}
+  code,.mono{font-family:"IBM Plex Mono",monospace}
+  td code{font-size:.82rem;color:var(--cyan);background:rgba(57,215,196,.08);padding:1px 6px;border-radius:5px}
+  .gbadge{
+    font-family:"IBM Plex Mono",monospace;font-size:.66rem;font-weight:600;letter-spacing:.06em;
+    padding:3px 8px;border-radius:6px;white-space:nowrap;text-transform:uppercase;
+  }
+  .gbadge.A{color:#ffce7a;background:rgba(255,176,46,.13);border:1px solid rgba(255,176,46,.35)}
+  .gbadge.B{color:#9af0e4;background:rgba(57,215,196,.12);border:1px solid rgba(57,215,196,.32)}
+  .gbadge.C{color:#a6efbf;background:rgba(90,217,140,.12);border:1px solid rgba(90,217,140,.3)}
+  .cond{font-family:"IBM Plex Mono",monospace;font-size:.78rem}
+  .cond.always{color:var(--green)} .cond.cond-if{color:var(--amber)}
+  .crit{color:var(--red);font-weight:600}
+
+  /* ---- callout / steps ---- */
+  .note{
+    margin-top:24px;border:1px solid var(--line);border-left:3px solid var(--cyan);
+    background:linear-gradient(90deg,rgba(57,215,196,.06),transparent 70%);
+    padding:16px 18px;border-radius:10px;font-size:.92rem;color:var(--ink-dim);
+  }
+  .note b{color:var(--ink)}
+  .note.crit{border-left-color:var(--red);background:linear-gradient(90deg,rgba(255,93,108,.07),transparent 70%)}
+
+  /* ---- run / code block ---- */
+  pre.block{
+    margin:22px 0 0;border:1px solid var(--line);border-radius:12px;background:#0a0c10;
+    padding:18px 20px;overflow-x:auto;font-family:"IBM Plex Mono",monospace;font-size:.84rem;
+    color:var(--ink);line-height:1.7;
+  }
+  pre.block .c{color:var(--ink-faint)}
+  pre.block .k{color:var(--amber)}
+  pre.block .s{color:var(--cyan)}
+
+  ul.clean{margin:18px 0 0;padding:0;list-style:none}
+  ul.clean li{position:relative;padding:7px 0 7px 26px;color:var(--ink-dim);font-size:.95rem;border-bottom:1px dashed var(--line-soft)}
+  ul.clean li:last-child{border-bottom:none}
+  ul.clean li::before{content:"›";position:absolute;left:6px;top:7px;color:var(--amber);font-weight:700}
+  ul.clean li b{color:var(--ink)}
+
+  footer{
+    border-top:1px solid var(--line-soft);margin-top:20px;
+    padding:42px 0 64px;color:var(--ink-faint);font-size:.84rem;
+  }
+  footer .ftgrid{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
+  footer b{color:var(--ink-dim)}
+
+  /* reveal */
+  .reveal{opacity:0;transform:translateY(18px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  @media (max-width:880px){
+    .grid.g4{grid-template-columns:repeat(2,1fr)}
+    .grid.g3{grid-template-columns:1fr 1fr}
+    .nav-links{display:none}
+  }
+  @media (max-width:560px){
+    .grid.g2,.grid.g3,.grid.g4{grid-template-columns:1fr}
+    main{padding:0 16px}.nav-inner{padding:12px 16px}
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-inner">
+    <div class="brand"><span class="dot"></span>modernize&#8209;service · blueprint</div>
+    <nav class="nav-links">
+      <a href="#overview">Pipeline</a>
+      <a href="#engine">Cycle</a>
+      <a href="#operations">12 Ops</a>
+      <a href="#phases">Phases</a>
+      <a href="#errors">Errors</a>
+      <a href="#artifacts">Output</a>
+      <a href="#batch">Fleet</a>
+      <a href="#run">Run</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- ===================== HERO ===================== -->
+  <section class="hero" style="border-top:none">
+    <p class="kicker">jmod&nbsp;plugin · orchestration command</p>
+    <h1>The <span class="code">/modernize&#8209;service</span><br>assembly line.</h1>
+    <p class="lede">
+      One command takes a legacy Spring Boot service and drives it through a complete modernization
+      &mdash; <strong>internal&#8209;libs&nbsp;4.x</strong> migration, observability, business metrics,
+      REST surfaces over Thrift/gRPC, OpenAPI docs, tests, and Grafana &mdash; by orchestrating a
+      fleet of specialized Claude Code agents. Every step runs an <strong>execute&#8209;validate cycle</strong>
+      until it passes or hits its retry ceiling.
+    </p>
+
+    <div class="chips">
+      <span class="chip"><span class="led a"></span><b>Claude&nbsp;Opus&nbsp;4.5</b></span>
+      <span class="chip"><span class="led c"></span>Claude&nbsp;Code <b>early&#8209;2026</b> build</span>
+      <span class="chip"><span class="led v"></span>requires <b>common</b>&nbsp;+&nbsp;<b>jmod</b> plugins</span>
+      <span class="chip"><span class="led g"></span><b>13</b> operations · <b>26</b> agents</span>
+    </div>
+
+    <div class="compat">
+      <span class="ic">▲</span>
+      <p>
+        <b>Historical context.</b> This workflow was authored for a <b>Claude Code build from late&nbsp;2025</b>
+        and was run with <b>Claude&nbsp;Opus&nbsp;4.5</b> as the orchestrator. Both marketplaces in this repository
+        must be installed: <b>common</b> (shared documentation &amp; validation tooling) and <b>jmod</b>
+        (the Java Services Modernization pipeline, which depends on Common). The batch variant additionally needs
+        the experimental <span class="mono">Agent&nbsp;Teams</span> feature enabled.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== OVERVIEW DIAGRAM (FEATURE) ===================== -->
+  <section id="overview">
+    <div class="sec-head reveal">
+      <span class="sec-num">01</span>
+      <h2>The pipeline at a glance</h2>
+    </div>
+    <p class="sec-sub reveal">
+      Research first, then four execution groups flow into a final build gate. Group&nbsp;A is sequential and
+      <span class="crit">critical</span>; Groups&nbsp;B and C fan out in parallel; Group&nbsp;D documents everything.
+      Operations marked <span class="mono">*</span> only run when the service exposes (or gains) REST endpoints.
+    </p>
+
+    <div class="diagram feature reveal">
+      <div class="bar"><i></i><i></i><i></i><span class="tt">map · /jmod:modernize-service &lt;project&gt;</span></div>
+      <div class="canvas"><svg id="d-pipeline" class="wf" role="img" aria-label="modernize-service pipeline"></svg></div>
+    </div>
+
+    <div class="legend reveal">
+      <span><span class="sw p0"></span>Phase 0 · research</span>
+      <span><span class="sw ga"></span>Group A · critical, sequential</span>
+      <span><span class="sw gb"></span>Group B · parallel</span>
+      <span><span class="sw gc"></span>Group C · parallel</span>
+      <span><span class="sw gd"></span>Group D · docs</span>
+      <span><b style="color:var(--ink-dim)">sub-labels</b> = run condition / dependency</span>
+    </div>
+  </section>
+
+  <!-- ===================== EXECUTE-VALIDATE CYCLE ===================== -->
+  <section id="engine">
+    <div class="sec-head reveal">
+      <span class="sec-num">02</span>
+      <h2>The engine: every operation is a cycle</h2>
+    </div>
+    <p class="sec-sub reveal">
+      Each box in the pipeline above is not a single shot &mdash; it is an <strong>execute&#8209;validate loop</strong>.
+      An <span class="mono">ag-*</span> executor does the work and writes an implementation report; a dedicated
+      <span class="mono">agchk-*</span> validator independently checks it against a criteria skill. On failure the
+      executor reads the findings and retries, up to the operation's <em>max&nbsp;cycles</em>. Agents talk to each
+      other through files in <code class="mono">ai-lastbuild-reports/</code> &mdash; the orchestrator only reads verdicts.
+    </p>
+
+    <div class="diagram reveal">
+      <div class="bar"><i></i><i></i><i></i><span class="tt">protocol · execute → validate → retry</span></div>
+      <div class="canvas"><svg id="d-cycle" class="wf" role="img" aria-label="execute-validate cycle"></svg></div>
+    </div>
+
+    <div class="grid g3">
+      <div class="card reveal"><div class="edge ga"></div>
+        <span class="tag">executor</span><h3>ag-&#42;</h3>
+        <p>Opus-class implementation agent. Preloads its <span class="mono">howto-*</span> + <span class="mono">criteria-*</span> skills, makes the changes, writes <code class="mono">{op}-implementation.md</code>.</p>
+      </div>
+      <div class="card reveal"><div class="edge gb"></div>
+        <span class="tag">validator</span><h3>agchk-&#42;</h3>
+        <p>Independent checker. Preloads the same <span class="mono">criteria-*</span> skill plus a Python deterministic validator, then returns <span class="mono">PASS</span>/<span class="mono">FAIL</span>.</p>
+      </div>
+      <div class="card reveal"><div class="edge gd"></div>
+        <span class="tag">channel</span><h3>ai-lastbuild-reports/</h3>
+        <p>File-based protocol. Implementation &amp; validation reports persist here so retries carry context and the orchestrator stays lean.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 12 OPERATIONS TABLE ===================== -->
+  <section id="operations">
+    <div class="sec-head reveal">
+      <span class="sec-num">03</span>
+      <h2>The master operations table</h2>
+    </div>
+    <p class="sec-sub reveal">
+      Thirteen operations across three execution groups. Conditions are derived from Phase&nbsp;0 research, so a
+      pure-Thrift service skips the gRPC rows and vice-versa, and services with no REST surface skip the
+      REST-only rows entirely.
+    </p>
+
+    <div class="table-wrap reveal">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Operation</th><th>Executor → Validator</th><th>Group</th><th>Max</th><th>Runs when</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">1</td><td><span class="op">internal-libs migration</span><br><span style="font-size:.82rem">2.x/3.x → 4.x, Spring Boot 3→4</span></td><td><code>ag-migrate2-internal-libs</code></td><td><span class="gbadge A">A</span></td><td class="mono">3</td><td><span class="cond always">Always</span> · <span class="crit">STOP on fail</span></td></tr>
+          <tr><td class="mono">2</td><td><span class="op">Create shade module</span><br><span style="font-size:.82rem">backward-compat test JAR</span></td><td><code>ag-create-shade-module</code></td><td><span class="gbadge A">A</span></td><td class="mono">2</td><td><span class="cond cond-if">if Thrift or gRPC</span></td></tr>
+          <tr><td class="mono">3a</td><td><span class="op">Add REST / Thrift</span></td><td><code>ag-add-rest-thrift</code></td><td><span class="gbadge A">A</span></td><td class="mono">2</td><td><span class="cond cond-if">if Thrift</span></td></tr>
+          <tr><td class="mono">3b</td><td><span class="op">Add REST / gRPC</span></td><td><code>ag-add-rest-grpc</code></td><td><span class="gbadge A">A</span></td><td class="mono">2</td><td><span class="cond cond-if">if gRPC</span></td></tr>
+          <tr><td class="mono">4</td><td><span class="op">Create REST client</span><br><span style="font-size:.82rem">Feign-based module</span></td><td><code>ag-create-rest-client</code></td><td><span class="gbadge B">B</span></td><td class="mono">2</td><td><span class="cond cond-if">if REST exists</span></td></tr>
+          <tr><td class="mono">5</td><td><span class="op">Migrate DB tests</span><br><span style="font-size:.82rem">embedded → external PostgreSQL</span></td><td><code>ag-migrate-db-tests</code></td><td><span class="gbadge B">B</span></td><td class="mono">2</td><td><span class="cond always">Always</span></td></tr>
+          <tr><td class="mono">6</td><td><span class="op">Add observability</span><br><span style="font-size:.82rem">Prometheus, actuator, logging</span></td><td><code>ag-add-observability</code></td><td><span class="gbadge B">B</span></td><td class="mono">2</td><td><span class="cond always">Always</span></td></tr>
+          <tr><td class="mono">6a</td><td><span class="op">Add business metrics</span><br><span style="font-size:.82rem">tagged + error counters, @Timed</span></td><td><code>ag-add-metrics</code></td><td><span class="gbadge B">B</span></td><td class="mono">2</td><td><span class="cond always">Always</span></td></tr>
+          <tr><td class="mono">7</td><td><span class="op">Add OpenAPI / Swagger</span></td><td><code>ag-add-openapi</code></td><td><span class="gbadge B">B</span></td><td class="mono">2</td><td><span class="cond cond-if">if REST exists</span></td></tr>
+          <tr><td class="mono">8</td><td><span class="op">Create REST tests</span><br><span style="font-size:.82rem">MockMvc + WireMock</span></td><td><code>ag-create-rest-tests</code></td><td><span class="gbadge C">C</span></td><td class="mono">2</td><td><span class="cond cond-if">if REST exists</span></td></tr>
+          <tr><td class="mono">9</td><td><span class="op">Document REST API</span></td><td><code>ag-document-rest-api</code></td><td><span class="gbadge C">C</span></td><td class="mono">2</td><td><span class="cond cond-if">if REST exists</span></td></tr>
+          <tr><td class="mono">10</td><td><span class="op">Add local Grafana</span><br><span style="font-size:.82rem">docker-compose stack · after op6</span></td><td><code>ag-add-local-grafana</code></td><td><span class="gbadge C">C</span></td><td class="mono">2</td><td><span class="cond always">Always</span></td></tr>
+          <tr><td class="mono">11</td><td><span class="op">Add dashboard</span><br><span style="font-size:.82rem">Team convention · after 6a &amp; 10</span></td><td><code>ag-add-dashboard</code></td><td><span class="gbadge C">C</span></td><td class="mono">2</td><td><span class="cond always">Always</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="sec-sub reveal" style="margin-top:14px;font-size:.86rem">
+      Every executor pairs with a same-named <code class="mono">agchk-*</code> validator (e.g.
+      <code class="mono">ag-add-observability</code> → <code class="mono">agchk-add-observability</code>).
+      Read-only Phase&nbsp;0 detectors run on <span class="mono">haiku</span> for speed; implementation agents run on Opus.
+    </p>
+  </section>
+
+  <!-- ===================== PHASES ===================== -->
+  <section id="phases">
+    <div class="sec-head reveal">
+      <span class="sec-num">04</span>
+      <h2>Phase by phase</h2>
+    </div>
+    <p class="sec-sub reveal">All operations run in <strong>verify-and-enhance</strong> mode &mdash; nothing is skipped just because it "already exists", because the underlying skills may have improved since the last run.</p>
+
+    <div class="grid g3">
+      <div class="card reveal"><div class="edge p0"></div>
+        <span class="tag">Phase 0</span><h3>Research</h3>
+        <p>Three read-only detectors (<span class="mono">project-analyzer</span>, <span class="mono">thrift-detector</span>, <span class="mono">grpc-detector</span>) plus a read of the project's CLAUDE.md run in parallel. Findings are summarised back to the user.</p>
+      </div>
+      <div class="card reveal"><div class="edge ga"></div>
+        <span class="tag">Group A · critical</span><h3>Foundation</h3>
+        <p>Sequential. The internal-libs 4.x migration must PASS before anything else; then the shade module and REST-over-protocol layers are added. A hard failure here stops the run.</p>
+      </div>
+      <div class="card reveal"><div class="edge gb"></div>
+        <span class="tag">Group B · parallel</span><h3>Capabilities</h3>
+        <p>Five operations launch at once once op1 is green: REST client, DB-test migration, observability, business metrics, and OpenAPI &mdash; everything that depends only on the migration.</p>
+      </div>
+      <div class="card reveal"><div class="edge gc"></div>
+        <span class="tag">Group C · parallel</span><h3>Surface &amp; visibility</h3>
+        <p>REST tests, REST API docs, and the local Grafana stack fan out after Group&nbsp;B. The standardized dashboard (op11) waits for both metrics (6a) and the Grafana stack (10).</p>
+      </div>
+      <div class="card reveal"><div class="edge gd"></div>
+        <span class="tag">Group D · docs</span><h3>Documentation</h3>
+        <p><span class="mono">common:docproj-assessor</span> grades documentation maturity, then the matching <span class="mono">docproj-*</span> writer agents create/update README, CLAUDE.md and <code class="mono">docs/*</code>. They self-validate.</p>
+      </div>
+      <div class="card reveal"><div class="edge fin"></div>
+        <span class="tag">Final gate</span><h3>Build &amp; summary</h3>
+        <p>A full <code class="mono">mvn clean</code> then <code class="mono">mvn clean verify</code> from the project root, a per-operation status table, and the build verdict &mdash; saved to <code class="mono">modernize-service-summary.md</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ERROR HANDLING ===================== -->
+  <section id="errors">
+    <div class="sec-head reveal">
+      <span class="sec-num">05</span>
+      <h2>What happens when something fails</h2>
+    </div>
+    <div class="table-wrap reveal">
+      <table>
+        <thead><tr><th>Scenario</th><th>Action</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td><span class="op">Operation&nbsp;1 fails</span> after max cycles</td><td><span class="crit">STOP</span> &mdash; ask the user how to proceed</td><td>The internal-libs migration is the foundation; the run cannot continue safely without it.</td></tr>
+          <tr><td><span class="op">Operations&nbsp;2&ndash;11 fail</span> after max cycles</td><td><b style="color:var(--amber)">LOG WARNING</b> with validator findings, continue</td><td>Non-blocking gaps &mdash; better to finish with known issues than abort the whole modernization.</td></tr>
+          <tr><td>Condition not met</td><td>Mark <span class="mono">SKIPPED</span></td><td>Normal flow &mdash; not every feature applies to every service.</td></tr>
+          <tr><td>Validator agent error</td><td>Treat as <span class="mono">FAIL</span> for that iteration</td><td>If validation can't run, quality is not assured.</td></tr>
+          <tr><td>Executor agent error</td><td>Treat as <span class="mono">FAIL</span> for that iteration</td><td>If implementation didn't complete, the work isn't done.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note crit reveal"><b>Single critical path.</b> Only Operation&nbsp;1 can halt the pipeline. Everything downstream degrades gracefully into warnings, so the orchestrator always reaches the final build gate and produces a summary.</div>
+  </section>
+
+  <!-- ===================== ARTIFACTS ===================== -->
+  <section id="artifacts">
+    <div class="sec-head reveal">
+      <span class="sec-num">06</span>
+      <h2>What lands in the repository</h2>
+    </div>
+    <p class="sec-sub reveal">A completed run leaves concrete, reviewable artifacts &mdash; not just a green build.</p>
+    <div class="grid g4">
+      <div class="card reveal"><span class="tag">op 2</span><h3>Shade module</h3><p><code class="mono">{project}-shade/</code></p></div>
+      <div class="card reveal"><span class="tag">op 3a / 3b</span><h3>REST model</h3><p><code class="mono">{project}-rest-model/</code></p></div>
+      <div class="card reveal"><span class="tag">op 4</span><h3>REST client</h3><p><code class="mono">{project}-rest-client/</code></p></div>
+      <div class="card reveal"><span class="tag">op 5</span><h3>DB test config</h3><p><code class="mono">docker-compose.test.database.yml</code></p></div>
+      <div class="card reveal"><span class="tag">op 6</span><h3>Observability</h3><p><code class="mono">application.yml</code> updates</p></div>
+      <div class="card reveal"><span class="tag">op 6a</span><h3>Business metrics</h3><p><code class="mono">*Metrics.java</code> · <span class="mono">@Timed</span></p></div>
+      <div class="card reveal"><span class="tag">op 7</span><h3>OpenAPI config</h3><p><code class="mono">OpenApiConfig.java</code> · Swagger/Scalar</p></div>
+      <div class="card reveal"><span class="tag">op 8</span><h3>REST tests</h3><p><code class="mono">src/test/.../rest/</code></p></div>
+      <div class="card reveal"><span class="tag">op 9</span><h3>REST API docs</h3><p><code class="mono">docs/rest-api.md</code></p></div>
+      <div class="card reveal"><span class="tag">op 10</span><h3>Grafana stack</h3><p><code class="mono">docker-compose.test.metrics.yml</code></p></div>
+      <div class="card reveal"><span class="tag">op 11</span><h3>Dashboard</h3><p><code class="mono">metrics/grafana/.../{service}.json</code></p></div>
+      <div class="card reveal"><span class="tag">group D</span><h3>Project docs</h3><p><code class="mono">README · CLAUDE.md · docs/*</code></p></div>
+    </div>
+  </section>
+
+  <!-- ===================== BATCH / FLEET ===================== -->
+  <section id="batch">
+    <div class="sec-head reveal">
+      <span class="sec-num">07</span>
+      <h2>Scaling out: <span class="code" style="color:var(--cyan)">/modernize&#8209;all&#8209;services</span></h2>
+    </div>
+    <p class="sec-sub reveal">
+      The same pipeline, run across a whole fleet of services in parallel using <strong>Agent&nbsp;Teams</strong>.
+      A team lead creates one task per service, spawns up to three background <span class="mono">ag-modernize-worker</span>
+      agents, and each worker claims tasks from a shared list. Per service, a worker runs the full
+      <em>modernize</em> pipeline, then an <em>improvement</em> cycle, then writes a combined report.
+    </p>
+
+    <div class="diagram reveal">
+      <div class="bar"><i></i><i></i><i></i><span class="tt">teams · /jmod:modernize-all-services ubag ucontent …</span></div>
+      <div class="canvas"><svg id="d-teams" class="wf" role="img" aria-label="modernize-all-services agent teams"></svg></div>
+    </div>
+
+    <h3 style="font-family:'Chakra Petch';font-weight:600;margin:42px 0 0;font-size:1.25rem;color:var(--ink)">Inside Phase&nbsp;2 — the improvement cycle</h3>
+    <p class="sec-sub reveal" style="margin-top:10px">
+      Where the per-operation <span class="mono">agchk-*</span> validators check one operation each, the improvement
+      cycle verifies <strong>interactions between operations</strong>: that the core business logic was not changed,
+      that every Thrift/gRPC method has a REST endpoint, and that every REST endpoint has a client method.
+    </p>
+
+    <div class="diagram reveal">
+      <div class="bar"><i></i><i></i><i></i><span class="tt">howto-improve-service · max 3 iterations</span></div>
+      <div class="canvas"><svg id="d-improve" class="wf" role="img" aria-label="improvement cycle"></svg></div>
+    </div>
+
+    <ul class="clean reveal">
+      <li><b>Workers self-coordinate</b> through the shared task list &mdash; they claim the lowest pending task, set themselves as owner, and message the lead with a verdict when done.</li>
+      <li><b>Worker subagents are not team members</b> &mdash; each worker spawns the <span class="mono">ag-*</span> pipeline agents as ordinary subagents (no <span class="mono">team_name</span>).</li>
+      <li><b>Graceful shutdown</b> &mdash; on a shutdown request a busy worker finishes its current service first, then the lead runs <span class="mono">TeamDelete()</span> and assembles the fleet-wide report.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== HOW TO RUN ===================== -->
+  <section id="run">
+    <div class="sec-head reveal">
+      <span class="sec-num">08</span>
+      <h2>Prerequisites &amp; invocation</h2>
+    </div>
+
+    <div class="grid g3">
+      <div class="card reveal"><div class="edge gd"></div><span class="tag">plugins</span><h3>common + jmod</h3><p>Install both marketplaces from this repo. <span class="mono">jmod</span> depends on <span class="mono">common</span> for shared documentation &amp; validation tooling.</p></div>
+      <div class="card reveal"><div class="edge ga"></div><span class="tag">model</span><h3>Claude Opus 4.5</h3><p>The orchestrator was run on Opus&nbsp;4.5. Implementation agents use Opus; read-only detectors use haiku.</p></div>
+      <div class="card reveal"><div class="edge gb"></div><span class="tag">batch only</span><h3>Agent Teams</h3><p><span class="mono">/modernize-all-services</span> needs the experimental Agent&nbsp;Teams feature enabled before launch.</p></div>
+    </div>
+
+    <pre class="block reveal"><span class="c"># Single service — full modernization pipeline</span>
+<span class="k">/jmod:modernize-service</span> <span class="s">ubag</span>
+
+<span class="c"># Whole fleet — requires the experimental Agent Teams feature</span>
+<span class="k">export</span> CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=<span class="s">1</span>   <span class="c"># set before starting Claude Code</span>
+<span class="k">/jmod:modernize-all-services</span> <span class="s">ubag ucontent uauditing</span>
+<span class="c"># …or describe the set:  "all u* services in /path/to/uservices"</span>
+
+<span class="c"># Verify a finished service by hand</span>
+mvn clean <span class="k">&amp;&amp;</span> mvn clean verify
+curl http://localhost:8090/actuator/prometheus
+open http://localhost:8090/swagger-ui.html</pre>
+
+    <div class="note reveal"><b>Reports to read afterwards.</b> Per service: <code class="mono">ai-lastbuild-reports/modernize-service-summary.md</code> (operation-level) and <code class="mono">modernize-and-improve-summary.md</code> (with the improvement cycle). Fleet-wide: <code class="mono">modernize-all-services-report.md</code> in the working directory.</div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="ftgrid">
+    <div>
+      <b>modernize-service · workflow blueprint</b><br>
+      Generated documentation for the <span class="mono">jmod</span> plugin orchestration command.
+    </div>
+    <div style="text-align:right">
+      Built for a <b>Claude&nbsp;Code early-2026 build</b> · run with <b>Claude&nbsp;Opus&nbsp;4.5</b><br>
+      Source of truth: <span class="mono">skills/howto-modernize-service</span> &amp; <span class="mono">commands/modernize-all-services</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ---------- tiny SVG diagram renderer ---------- */
+const NS='http://www.w3.org/2000/svg';
+const E=(t,a,k)=>{const e=document.createElementNS(NS,t);if(a)for(const n in a)e.setAttribute(n,a[n]);if(k)(Array.isArray(k)?k:[k]).forEach(c=>{if(c!=null)e.appendChild(typeof c==='string'?document.createTextNode(c):c)});return e;};
+const A=n=>({t:[n.x+n.w/2,n.y],b:[n.x+n.w/2,n.y+n.h],l:[n.x,n.y+n.h/2],r:[n.x+n.w,n.y+n.h/2],cx:n.x+n.w/2,cy:n.y+n.h/2});
+
+function textBlock(cx,cy,lines,lh){
+  lh=lh||15;
+  const total=(lines.length-1)*lh, y0=cy-total/2;
+  const t=E('text',{x:cx,y:y0,'text-anchor':'middle','dominant-baseline':'central',class:'lbl'});
+  lines.forEach((ln,i)=>{
+    const o=(typeof ln==='string')?{t:ln}:ln;
+    const cls=o.sub?'sub':(o.strong?'strong':'');
+    t.appendChild(E('tspan',{x:cx,dy:i===0?0:lh,class:cls},[o.t]));
+  });
+  return t;
+}
+function drawNode(n){
+  const g=E('g',{class:'node '+(n.cls||'')});
+  const cx=n.x+n.w/2, cy=n.y+n.h/2;
+  let box;
+  if(n.shape==='stadium') box=E('rect',{x:n.x,y:n.y,width:n.w,height:n.h,rx:n.h/2,class:'box'});
+  else if(n.shape==='diamond'){box=E('polygon',{points:`${cx},${n.y} ${n.x+n.w},${cy} ${cx},${n.y+n.h} ${n.x},${cy}`,class:'box'});}
+  else if(n.shape==='hex'){const o=Math.min(22,n.h/2);box=E('polygon',{points:`${n.x+o},${n.y} ${n.x+n.w-o},${n.y} ${n.x+n.w},${cy} ${n.x+n.w-o},${n.y+n.h} ${n.x+o},${n.y+n.h} ${n.x},${cy}`,class:'box'});}
+  else box=E('rect',{x:n.x,y:n.y,width:n.w,height:n.h,rx:11,class:'box'});
+  g.appendChild(box);
+  g.appendChild(textBlock(cx,cy,n.lines));
+  return g;
+}
+function drawBand(b){
+  const g=E('g',{class:'bandg '+(b.cls||'')});
+  g.appendChild(E('rect',{x:b.x,y:b.y,width:b.w,height:b.h,rx:14,class:'band'}));
+  if(b.label) g.appendChild(E('text',{x:b.x+18,y:b.y+20,class:'band-label'},[b.label]));
+  return g;
+}
+function drawEdge(e){
+  const pts=e.pts;
+  const d=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const g=E('g');
+  g.appendChild(E('path',{d,class:'edge'+(e.dashed?' dashed':''),'marker-end':e.dashed?'url(#wf-arrow-d)':'url(#wf-arrow)'}));
+  if(e.label){
+    const mid=pts[Math.floor((pts.length-1)/2)];
+    const mx=(e.lx!=null?e.lx:mid[0]), my=(e.ly!=null?e.ly:mid[1]);
+    const w=e.label.length*6.5+14;
+    g.appendChild(E('rect',{x:mx-w/2,y:my-9,width:w,height:18,rx:5,class:'elabel-bg'}));
+    g.appendChild(E('text',{x:mx,y:my,'text-anchor':'middle','dominant-baseline':'central',class:'elabel'},[e.label]));
+  }
+  return g;
+}
+function defs(){
+  const d=E('defs');
+  const mk=(id)=>{const m=E('marker',{id,viewBox:'0 0 8 8',refX:6.2,refY:4,markerWidth:6,markerHeight:6,orient:'auto'});m.appendChild(E('path',{d:'M0 0 L8 4 L0 8 z'}));return m;};
+  d.appendChild(mk('wf-arrow')); d.appendChild(mk('wf-arrow-d'));
+  return d;
+}
+function spread(n,w,l,r){
+  const avail=r-l;
+  if(n===1) return [l+(avail-w)/2];
+  const gap=(avail-n*w)/(n-1);
+  return Array.from({length:n},(_,i)=>l+i*(w+gap));
+}
+function render(id,spec){
+  const svg=document.getElementById(id);
+  if(!svg) return;
+  svg.setAttribute('viewBox',`0 0 ${spec.width} ${spec.height}`);
+  svg.setAttribute('width',spec.width);
+  svg.setAttribute('height',spec.height);
+  svg.appendChild(defs());
+  (spec.bands||[]).forEach(b=>svg.appendChild(drawBand(b)));
+  (spec.edges||[]).forEach(e=>svg.appendChild(drawEdge(e)));
+  (spec.nodes||[]).forEach(n=>svg.appendChild(drawNode(n)));
+}
+window.__renderAll=function(){
+  render('d-pipeline', buildPipeline());
+  render('d-cycle',    buildCycle());
+  render('d-teams',    buildTeams());
+  render('d-improve',  buildImprove());
+};
+</script>
+
+<script>
+/* ============ PIPELINE ============ */
+function buildPipeline(){
+  const W=1220, H=1268, cx=W/2;
+  const bx1=24, bx2=W-24, bw=bx2-bx1, il=64, ir=W-64;
+  const nodes=[], bands=[], edges=[];
+
+  const start={x:cx-200,y:18,w:400,h:46,shape:'stadium',cls:'n-io',lines:['/jmod:modernize-service <project>']};
+  const cleanup={x:cx-200,y:96,w:400,h:50,cls:'n-io',lines:['Cleanup',{t:'rm -rf ai-lastbuild-reports/',sub:true}]};
+  nodes.push(start,cleanup);
+  edges.push({pts:[A(start).b,A(cleanup).t]});
+
+  const p0={x:bx1,y:176,w:bw,h:126,label:'PHASE 0 · RESEARCH — read-only · haiku',cls:'band-p0'};
+  bands.push(p0);
+  const p0w=232, p0h=58, p0y=p0.y+58;
+  const p0lines=[['project-analyzer',{t:'SB · Java · modules',sub:true}],['thrift-detector'],['grpc-detector'],['read CLAUDE.md']];
+  spread(4,p0w,il,ir).forEach((x,i)=>nodes.push({x,y:p0y,w:p0w,h:p0h,cls:'n-p0',lines:p0lines[i]}));
+  edges.push({pts:[A(cleanup).b,[cx,p0.y]]});
+
+  const findings={x:cx-150,y:330,w:300,h:50,shape:'hex',cls:'n-io',lines:['Present findings to user']};
+  nodes.push(findings);
+  edges.push({pts:[[cx,p0.y+p0.h],A(findings).t]});
+
+  const ga={x:bx1,y:410,w:bw,h:150,label:'GROUP A · SEQUENTIAL · CRITICAL',cls:'band-ga'};
+  bands.push(ga);
+  edges.push({pts:[A(findings).b,[cx,ga.y]]});
+  const gaW=250, gaH=82, gaY=ga.y+50;
+  const gaLines=[
+    [{t:'1 · internal-libs 4.x',strong:true},'migration',{t:'critical · STOP on fail',sub:true}],
+    ['2 · Shade module',{t:'if Thrift / gRPC',sub:true}],
+    ['3a/3b · Add REST','to Thrift / gRPC',{t:'if detected',sub:true}],
+  ];
+  const gx=spread(3,gaW,il,ir);
+  const gan=gx.map((x,i)=>({x,y:gaY,w:gaW,h:gaH,cls:'n-ga',lines:gaLines[i]}));
+  nodes.push(...gan);
+  edges.push({pts:[A(gan[0]).r,A(gan[1]).l]});
+  edges.push({pts:[A(gan[1]).r,A(gan[2]).l]});
+
+  const gb={x:bx1,y:612,w:bw,h:140,label:'GROUP B · PARALLEL · after op1',cls:'band-gb'};
+  bands.push(gb);
+  edges.push({pts:[[cx,ga.y+ga.h],[cx,gb.y]],label:'op1 must PASS',lx:cx,ly:(ga.y+ga.h+gb.y)/2});
+  const gbW=196, gbH=74, gbY=gb.y+48;
+  const gbLines=[
+    ['4 · REST client',{t:'if REST',sub:true}],
+    ['5 · Migrate','DB tests'],
+    ['6 · Observability'],
+    ['6a · Business','metrics'],
+    ['7 · OpenAPI','/ Swagger',{t:'if REST',sub:true}],
+  ];
+  spread(5,gbW,il,ir).forEach((x,i)=>nodes.push({x,y:gbY,w:gbW,h:gbH,cls:'n-gb',lines:gbLines[i]}));
+
+  const gc={x:bx1,y:806,w:bw,h:158,label:'GROUP C · PARALLEL · after Group B',cls:'band-gc'};
+  bands.push(gc);
+  edges.push({pts:[[cx,gb.y+gb.h],[cx,gc.y]]});
+  const gcW=210, gcH=92, gcY=gc.y+52;
+  const gcLines=[
+    ['8 · REST tests',{t:'if REST',sub:true}],
+    ['9 · Document','REST API',{t:'if REST',sub:true}],
+    ['10 · Local Grafana',{t:'depends · op6',sub:true}],
+    ['11 · Dashboard',{t:'depends · 6a + op10',sub:true}],
+  ];
+  spread(4,gcW,il,ir).forEach((x,i)=>nodes.push({x,y:gcY,w:gcW,h:gcH,cls:'n-gc',lines:gcLines[i]}));
+
+  const gd={x:bx1,y:1018,w:bw,h:120,label:'GROUP D · DOCUMENTATION',cls:'band-gd'};
+  bands.push(gd);
+  edges.push({pts:[[cx,gc.y+gc.h],[cx,gd.y]]});
+  const gdH=58, gdY=gd.y+44;
+  const assessor={x:il+90,y:gdY,w:300,h:gdH,cls:'n-gd',lines:['common:docproj-assessor']};
+  const writers={x:ir-300,y:gdY,w:300,h:gdH,cls:'n-gd',lines:['docproj-* writers',{t:'README · CLAUDE.md · docs/*',sub:true}]};
+  nodes.push(assessor,writers);
+  edges.push({pts:[A(assessor).r,A(writers).l]});
+
+  const final={x:cx-300,y:1172,w:600,h:80,cls:'n-fin',lines:[{t:'FINAL GATE',strong:true},{t:'mvn clean · mvn clean verify',sub:true},{t:'status table → ai-lastbuild-reports/',sub:true}]};
+  nodes.push(final);
+  edges.push({pts:[[cx,gd.y+gd.h],A(final).t]});
+
+  return {width:W,height:H,bands,nodes,edges};
+}
+
+/* ============ EXECUTE-VALIDATE CYCLE ============ */
+function buildCycle(){
+  const W=1140, H=792;
+  const n1={x:400,y:36,w:320,h:66,cls:'n-ga',lines:['Orchestrator spawns ag-* executor',{t:'iteration X / max N · scope bounds',sub:true}]};
+  const n2={x:400,y:142,w:320,h:60,cls:'n-ga',lines:['Executor performs work',{t:'writes {op}-implementation.md',sub:true}]};
+  const d1={x:455,y:248,w:210,h:104,shape:'diamond',cls:'n-neu',lines:['Executor','verdict?']};
+  const skip={x:840,y:272,w:250,h:56,cls:'n-skip',lines:['Mark SKIPPED',{t:'no validation',sub:true}]};
+  const n3={x:400,y:392,w:320,h:58,cls:'n-gb',lines:['Orchestrator spawns','agchk-* validator']};
+  const n4={x:400,y:478,w:320,h:60,cls:'n-gb',lines:['Validator runs checks',{t:'writes {op}-validation.md',sub:true}]};
+  const d2={x:455,y:566,w:210,h:104,shape:'diamond',cls:'n-neu',lines:['PASS or','FAIL?']};
+  const pass={x:840,y:590,w:250,h:56,cls:'n-ok',lines:['Operation complete ✓']};
+  const retry={x:44,y:398,w:256,h:66,cls:'n-ga',lines:['Increment iteration',{t:'executor reads findings',sub:true}]};
+  const mx={x:435,y:694,w:250,h:54,shape:'diamond',cls:'n-neu',lines:['iter+1 ≥ max']};
+  const stop={x:96,y:702,w:260,h:54,cls:'n-bad',lines:['Op 1 · STOP','ask user how to proceed'].map((t,i)=>i?{t,sub:true}:t)};
+  const warn={x:760,y:702,w:310,h:54,cls:'n-warn',lines:['Ops 2–11 · warn + continue']};
+
+  const nodes=[n1,n2,d1,skip,n3,n4,d2,pass,retry,mx,stop,warn];
+  const edges=[
+    {pts:[A(n1).b,A(n2).t]},
+    {pts:[A(n2).b,A(d1).t]},
+    {pts:[A(d1).r,A(skip).l],label:'SKIP',lx:752,ly:300},
+    {pts:[A(d1).b,A(n3).t],label:'COMPLETED',lx:560,ly:372},
+    {pts:[A(n3).b,A(n4).t]},
+    {pts:[A(n4).b,A(d2).t]},
+    {pts:[A(d2).r,A(pass).l],label:'PASS',lx:752,ly:618},
+    {pts:[A(d2).l,[372,618],[372,431],A(retry).r],label:'FAIL · iter+1 < max',lx:372,ly:560},
+    {pts:[A(retry).t,[172,69],A(n1).l],label:'retry',lx:286,ly:69},
+    {pts:[A(d2).b,A(mx).t]},
+    {pts:[A(mx).l,A(stop).r],label:'op 1',lx:400,ly:721},
+    {pts:[A(mx).r,A(warn).l],label:'ops 2–11',lx:723,ly:721},
+  ];
+  return {width:W,height:H,nodes,edges};
+}
+
+/* ============ MODERNIZE-ALL-SERVICES (TEAMS) ============ */
+function buildTeams(){
+  const W=1160, H=1132, cx=580;
+  const bx1=40, bx2=W-40, bw=bx2-bx1, il=80, ir=W-80;
+  const nodes=[], bands=[], edges=[];
+
+  const cmd={x:cx-200,y:28,w:400,h:46,shape:'stadium',cls:'n-io',lines:['/jmod:modernize-all-services <dirs>']};
+  const dEn={x:cx-110,y:108,w:220,h:104,shape:'diamond',cls:'n-neu',lines:['Agent Teams','enabled?']};
+  const stop={x:870,y:134,w:230,h:56,cls:'n-bad',lines:['Stop',{t:'enable + restart',sub:true}]};
+  const resolve={x:cx-180,y:250,w:360,h:58,cls:'n-neu',lines:['Resolve service dirs',{t:'verify each has pom.xml',sub:true}]};
+  const team={x:cx-180,y:338,w:360,h:50,cls:'n-neu',lines:['TeamCreate · modernize-services']};
+  const tasks={x:cx-180,y:414,w:360,h:58,cls:'n-neu',lines:['TaskCreate — one task per service',{t:'modernize + improve',sub:true}]};
+  const spawn={x:cx-180,y:502,w:360,h:58,cls:'n-neu',lines:['Spawn min(3, N) workers',{t:'ag-modernize-worker · background',sub:true}]};
+  nodes.push(cmd,dEn,stop,resolve,team,tasks,spawn);
+  edges.push({pts:[A(cmd).b,A(dEn).t]});
+  edges.push({pts:[A(dEn).r,A(stop).l],label:'no',lx:835,ly:162});
+  edges.push({pts:[A(dEn).b,A(resolve).t],label:'yes',lx:cx,ly:230});
+  edges.push({pts:[A(resolve).b,A(team).t]});
+  edges.push({pts:[A(team).b,A(tasks).t]});
+  edges.push({pts:[A(tasks).b,A(spawn).t]});
+
+  const wb={x:bx1,y:586,w:bw,h:104,label:'WORKERS · claim from shared task list',cls:'band-ga'};
+  bands.push(wb);
+  edges.push({pts:[A(spawn).b,[cx,wb.y]]});
+  const wW=220, wH=52, wY=wb.y+40;
+  spread(3,wW,il,ir).forEach((x,i)=>nodes.push({x,y:wY,w:wW,h:wH,cls:'n-ga',lines:['worker-'+(i+1)]}));
+
+  const lb={x:bx1,y:724,w:bw,h:150,label:'PER-SERVICE PIPELINE · each worker, per claimed task',cls:'band-gc'};
+  bands.push(lb);
+  edges.push({pts:[[cx,wb.y+wb.h],[cx,lb.y]],label:'each worker repeats',lx:cx,ly:(wb.y+wb.h+lb.y)/2});
+  const lW=300, lH=66, lY=lb.y+56;
+  const lLines=[
+    ['Phase 1 · Modernize',{t:'howto-modernize-service · Groups A–D',sub:true}],
+    ['Phase 2 · Improve',{t:'check → fix · max 3 iterations',sub:true}],
+    ['Phase 3 · Report',{t:'…-and-improve-summary.md',sub:true}],
+  ];
+  const lx=spread(3,lW,il,ir);
+  const ln=lx.map((x,i)=>({x,y:lY,w:lW,h:lH,cls:'n-gc',lines:lLines[i]}));
+  nodes.push(...ln);
+  edges.push({pts:[A(ln[0]).r,A(ln[1]).l]});
+  edges.push({pts:[A(ln[1]).r,A(ln[2]).l]});
+
+  const monitor={x:cx-180,y:912,w:360,h:50,cls:'n-neu',lines:['Lead monitors TaskList()']};
+  const shut={x:cx-180,y:988,w:360,h:50,cls:'n-neu',lines:['Shutdown workers · TeamDelete()']};
+  const report={x:cx-220,y:1062,w:440,h:60,shape:'stadium',cls:'n-io',lines:['Consolidated report',{t:'modernize-all-services-report.md',sub:true}]};
+  nodes.push(monitor,shut,report);
+  edges.push({pts:[[cx,lb.y+lb.h],A(monitor).t]});
+  edges.push({pts:[A(monitor).b,A(shut).t]});
+  edges.push({pts:[A(shut).b,A(report).t]});
+
+  return {width:W,height:H,bands,nodes,edges};
+}
+
+/* ============ IMPROVEMENT CYCLE ============ */
+function buildImprove(){
+  const W=1120, H=566;
+  const nodes=[], bands=[], edges=[];
+
+  const base={x:40,y:228,w:230,h:66,cls:'n-neu',lines:['Detect base branch',{t:'origin/master | main',sub:true}]};
+  const cb={x:300,y:110,w:300,h:300,label:'1 · CHECK',cls:'band-gb'};
+  bands.push(cb);
+  const cW=256, cX=cb.x+(cb.w-cW)/2;
+  const ce={x:cX,y:cb.y+52,w:cW,h:66,cls:'n-gb',lines:['Core functional','equivalence']};
+  const rm={x:cX,y:cb.y+134,w:cW,h:66,cls:'n-gb',lines:['REST mapping +','client completeness']};
+  const bv={x:cX,y:cb.y+216,w:cW,h:66,cls:'n-gb',lines:['Build','mvn clean · mvn clean test']};
+  const analyze={x:655,y:148,w:210,h:104,shape:'diamond',cls:'n-neu',lines:['all checks pass','& build green?']};
+  const complete={x:902,y:172,w:190,h:56,cls:'n-ok',lines:['COMPLETE ✓']};
+  const fix={x:645,y:346,w:230,h:66,cls:'n-ga',lines:['3 · FIX',{t:'mappings · client · handlers',sub:true}]};
+  const recheck={x:372,y:418,w:210,h:104,shape:'diamond',cls:'n-neu',lines:['iteration < 3?']};
+  const verdict={x:40,y:438,w:262,h:70,cls:'n-bad',lines:['NEEDS_MORE_WORK',{t:'or NEEDS_HUMAN_INTERVENTION',sub:true}]};
+  nodes.push(base,ce,rm,bv,analyze,complete,fix,recheck,verdict);
+
+  edges.push({pts:[A(base).r,[286,261],[300,261]]});
+  edges.push({pts:[[cb.x+cb.w,cb.y+cb.h/2],[628,260],[628,200],A(analyze).l]});
+  edges.push({pts:[A(analyze).r,A(complete).l],label:'yes',lx:883,ly:200});
+  edges.push({pts:[A(analyze).b,A(fix).t],label:'no',lx:760,ly:300});
+  edges.push({pts:[A(fix).l,[622,379],[622,470],A(recheck).r]});
+  edges.push({pts:[A(recheck).l,A(verdict).r],label:'iter ≥ 3',lx:337,ly:470});
+  edges.push({pts:[A(recheck).t,[A(recheck).cx,410]],label:'iter < 3',lx:A(recheck).cx,ly:414});
+
+  return {width:W,height:H,bands,nodes,edges};
+}
+
+window.__renderAll();
+</script>
+<script>
+  // Staggered reveal on scroll; degrade gracefully if unsupported.
+  (function(){
+    var els = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
+    if(!('IntersectionObserver' in window)){ els.forEach(function(e){e.classList.add('in');}); return; }
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); }
+      });
+    }, { rootMargin:'0px 0px -8% 0px', threshold:0.08 });
+    els.forEach(function(e){ io.observe(e); });
+    // Safety net: ensure everything is visible after load.
+    window.addEventListener('load', function(){
+      setTimeout(function(){ els.forEach(function(e){ e.classList.add('in'); }); }, 1200);
+    });
+  })();
+</script>
+</body>
+</html>

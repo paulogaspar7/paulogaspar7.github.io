@@ -12,14 +12,17 @@ entirely in the browser and do one job well.
 | # | Project | What it does | Status |
 |---|---------|--------------|--------|
 | 01 | [Downsizer](./downsizer/) | Picture-desk batch image resizer — drop in photos, cap their longest side, and download the downscaled set. PNG · JPEG · WebP, fully client-side. | Live |
+| 02 | [Modernizer](./modernizer/modernize-service-workflow.html) | Workflow blueprint explaining how the `/jmod:modernize-service` Claude Code command orchestrates a full Spring Boot service modernization, and how `/jmod:modernize-all-services` scales it across a fleet. | Live |
 
 ## Structure
 
 ```
 .
-├── index.html        # Homepage — the project index
-└── downsizer/
-    └── index.html    # Downsizer tool
+├── index.html                          # Homepage — the project index
+├── downsizer/
+│   └── index.html                      # Downsizer tool
+└── modernizer/
+    └── modernize-service-workflow.html # Modernizer workflow blueprint
 ```
 
 The homepage (`index.html`) is the front door and lists every published tool. New projects are added as

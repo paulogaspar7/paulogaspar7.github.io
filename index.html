@@ -258,6 +258,16 @@
                 color: var(--ink-soft);
                 line-height: 1.6;
             }
+            .entry .synopsis code {
+                font-family: var(--mono);
+                font-size: 0.86em;
+                color: var(--red-ink);
+                background: rgba(214, 58, 30, 0.07);
+                border: 1px solid var(--rule-soft);
+                border-radius: 4px;
+                padding: 1px 5px;
+                white-space: nowrap;
+            }
             .entry .tags {
                 margin: 20px 0 0;
                 display: flex;
@@ -454,7 +464,7 @@
             <main>
                 <div class="section-head reveal d4">
                     <h2>The Index</h2>
-                    <span class="count">01 / 01</span>
+                    <span class="count">01 / 02</span>
                 </div>
 
                 <ul class="ledger reveal d5">
@@ -483,6 +493,30 @@
                             </span>
                         </a>
                     </li>
+                    <li>
+                        <a class="entry" href="./modernizer/modernize-service-workflow.html">
+                            <span class="idx" aria-hidden="true">02</span>
+                            <span class="body">
+                                <span class="name">Modernizer <span class="arrow" aria-hidden="true">↗</span></span>
+                                <p class="synopsis">
+                                    A workflow blueprint: an illustrated walkthrough of how the
+                                    <code>/jmod:modernize-service</code> Claude Code command orchestrates a full Spring
+                                    Boot service modernization — and how <code>/jmod:modernize-all-services</code> fans
+                                    it out across a whole fleet. Reads like a map of the pipeline, stage by stage.
+                                </p>
+                                <ul class="tags">
+                                    <li>Blueprint</li>
+                                    <li>Claude Code</li>
+                                    <li>Spring Boot</li>
+                                    <li>Workflow</li>
+                                </ul>
+                            </span>
+                            <span class="meta">
+                                <b>Reference · jmod</b><br />
+                                Single page
+                            </span>
+                        </a>
+                    </li>
                 </ul>
             </main>
 
@@ -498,6 +532,7 @@
                     <span class="lab">Elsewhere</span>
                     <a href="https://github.com/paulogaspar7">GitHub</a>
                     <a href="./downsizer/">Downsizer</a>
+                    <a href="./modernizer/modernize-service-workflow.html">Modernizer</a>
                 </div>
             </footer>
 
