@@ -261,13 +261,14 @@
   .crit{color:var(--red);font-weight:600}
 
   /* ---- metrics table ---- */
-  table.mtx{min-width:760px}
-  .mtx th.grp{text-align:center;border-left:1px solid var(--line);color:var(--ink-dim)}
+  table.mtx{min-width:980px}
+  .mtx thead th{color:var(--ink)}
+  .mtx th.grp{text-align:center;border-left:1px solid var(--line);color:var(--ink)}
   .mtx td.n,.mtx th.n{text-align:right;font-family:"IBM Plex Mono",monospace;font-size:.82rem;white-space:nowrap}
   .mtx td.lab{color:var(--ink)}
   .mtx tr.sub td.lab{padding-left:34px;color:var(--ink-dim);font-weight:400}
   .mtx tr.sub td.n{color:var(--ink-faint)}
-  .mtx tr.skills td{font-weight:600;color:var(--ink);background:rgba(255,255,255,.02)}
+  .mtx tbody tr:not(.sub):not(.tot) td{font-weight:600;color:var(--ink);background:rgba(255,255,255,.02)}
   .mtx tr.tot td{font-weight:700;color:var(--ink);border-top:2px solid var(--line)}
   .mtx .pl{border-left:1px solid var(--line-soft)}
 
@@ -397,8 +398,8 @@
 
     <h3 class="reveal" style="font-family:'Chakra Petch';font-weight:600;margin:46px 0 0;font-size:1.25rem;color:var(--ink)">By the numbers — plugin footprint</h3>
     <p class="sec-sub reveal" style="margin-top:10px">
-      Source size of the two plugins that power this workflow, split by component type and &mdash; for
-      <span class="mono">skills</span> &mdash; by file format. Size is on-disk KB (1&nbsp;KB = 1024&nbsp;bytes).
+      File count, source lines, and on-disk size of the two plugins that power this workflow, split by
+      component type and &mdash; for <span class="mono">skills</span> &mdash; by file format. Size is KB (1&nbsp;KB = 1024&nbsp;bytes).
     </p>
 
     <div class="table-wrap reveal">
@@ -406,30 +407,30 @@
         <thead>
           <tr>
             <th rowspan="2">Component</th>
-            <th colspan="2" class="grp">Common</th>
-            <th colspan="2" class="grp">JMod</th>
-            <th colspan="2" class="grp">All plugins</th>
+            <th colspan="3" class="grp">Common</th>
+            <th colspan="3" class="grp">JMod</th>
+            <th colspan="3" class="grp">All plugins</th>
           </tr>
           <tr>
-            <th class="n pl">Lines</th><th class="n">Size</th>
-            <th class="n pl">Lines</th><th class="n">Size</th>
-            <th class="n pl">Lines</th><th class="n">Size</th>
+            <th class="n pl">Files</th><th class="n">Lines</th><th class="n">Size</th>
+            <th class="n pl">Files</th><th class="n">Lines</th><th class="n">Size</th>
+            <th class="n pl">Files</th><th class="n">Lines</th><th class="n">Size</th>
           </tr>
         </thead>
         <tbody>
-          <tr><td class="lab">Agents</td><td class="n pl">534</td><td class="n">18.4 KB</td><td class="n pl">1,213</td><td class="n">50.0 KB</td><td class="n pl">1,747</td><td class="n">68.4 KB</td></tr>
-          <tr><td class="lab">Commands</td><td class="n pl">85</td><td class="n">3.4 KB</td><td class="n pl">1,244</td><td class="n">47.8 KB</td><td class="n pl">1,329</td><td class="n">51.2 KB</td></tr>
-          <tr><td class="lab">Hooks</td><td class="n pl">—</td><td class="n">—</td><td class="n pl">14</td><td class="n">0.2 KB</td><td class="n pl">14</td><td class="n">0.2 KB</td></tr>
-          <tr class="skills"><td class="lab">Skills</td><td class="n pl">9,103</td><td class="n">258.0 KB</td><td class="n pl">16,337</td><td class="n">574.9 KB</td><td class="n pl">25,440</td><td class="n">833.0 KB</td></tr>
-          <tr class="sub"><td class="lab">Markdown (.md)</td><td class="n pl">9,103</td><td class="n">258.0 KB</td><td class="n pl">12,584</td><td class="n">445.3 KB</td><td class="n pl">21,687</td><td class="n">703.3 KB</td></tr>
-          <tr class="sub"><td class="lab">JSON (.json)</td><td class="n pl">—</td><td class="n">—</td><td class="n pl">2,128</td><td class="n">68.5 KB</td><td class="n pl">2,128</td><td class="n">68.5 KB</td></tr>
-          <tr class="sub"><td class="lab">Kotlin (.kt)</td><td class="n pl">—</td><td class="n">—</td><td class="n pl">601</td><td class="n">21.5 KB</td><td class="n pl">601</td><td class="n">21.5 KB</td></tr>
-          <tr class="sub"><td class="lab">Python (.py)</td><td class="n pl">—</td><td class="n">—</td><td class="n pl">440</td><td class="n">17.9 KB</td><td class="n pl">440</td><td class="n">17.9 KB</td></tr>
-          <tr class="sub"><td class="lab">Java (.java)</td><td class="n pl">—</td><td class="n">—</td><td class="n pl">302</td><td class="n">10.5 KB</td><td class="n pl">302</td><td class="n">10.5 KB</td></tr>
-          <tr class="sub"><td class="lab">XML (.xml)</td><td class="n pl">—</td><td class="n">—</td><td class="n pl">179</td><td class="n">7.7 KB</td><td class="n pl">179</td><td class="n">7.7 KB</td></tr>
-          <tr class="sub"><td class="lab">YAML (.yaml/.yml)</td><td class="n pl">—</td><td class="n">—</td><td class="n pl">73</td><td class="n">2.2 KB</td><td class="n pl">73</td><td class="n">2.2 KB</td></tr>
-          <tr class="sub"><td class="lab">IDE module (.iml)</td><td class="n pl">—</td><td class="n">—</td><td class="n pl">30</td><td class="n">1.4 KB</td><td class="n pl">30</td><td class="n">1.4 KB</td></tr>
-          <tr class="tot"><td class="lab">TOTAL</td><td class="n pl">9,722</td><td class="n">279.8 KB</td><td class="n pl">18,808</td><td class="n">672.9 KB</td><td class="n pl">28,530</td><td class="n">952.7 KB</td></tr>
+          <tr><td class="lab">Agents</td><td class="n pl">10</td><td class="n">534</td><td class="n">18.4 KB</td><td class="n pl">33</td><td class="n">1,213</td><td class="n">50.0 KB</td><td class="n pl">43</td><td class="n">1,747</td><td class="n">68.4 KB</td></tr>
+          <tr><td class="lab">Commands</td><td class="n pl">2</td><td class="n">85</td><td class="n">3.4 KB</td><td class="n pl">23</td><td class="n">1,244</td><td class="n">47.8 KB</td><td class="n pl">25</td><td class="n">1,329</td><td class="n">51.2 KB</td></tr>
+          <tr><td class="lab">Hooks</td><td class="n pl">—</td><td class="n">—</td><td class="n">—</td><td class="n pl">1</td><td class="n">14</td><td class="n">0.2 KB</td><td class="n pl">1</td><td class="n">14</td><td class="n">0.2 KB</td></tr>
+          <tr class="skills"><td class="lab">Skills</td><td class="n pl">34</td><td class="n">9,103</td><td class="n">258.0 KB</td><td class="n pl">87</td><td class="n">16,337</td><td class="n">574.9 KB</td><td class="n pl">121</td><td class="n">25,440</td><td class="n">833.0 KB</td></tr>
+          <tr class="sub"><td class="lab">Markdown (.md)</td><td class="n pl">34</td><td class="n">9,103</td><td class="n">258.0 KB</td><td class="n pl">52</td><td class="n">12,584</td><td class="n">445.3 KB</td><td class="n pl">86</td><td class="n">21,687</td><td class="n">703.3 KB</td></tr>
+          <tr class="sub"><td class="lab">JSON (.json)</td><td class="n pl">—</td><td class="n">—</td><td class="n">—</td><td class="n pl">14</td><td class="n">2,128</td><td class="n">68.5 KB</td><td class="n pl">14</td><td class="n">2,128</td><td class="n">68.5 KB</td></tr>
+          <tr class="sub"><td class="lab">Kotlin (.kt)</td><td class="n pl">—</td><td class="n">—</td><td class="n">—</td><td class="n pl">9</td><td class="n">601</td><td class="n">21.5 KB</td><td class="n pl">9</td><td class="n">601</td><td class="n">21.5 KB</td></tr>
+          <tr class="sub"><td class="lab">Python (.py)</td><td class="n pl">—</td><td class="n">—</td><td class="n">—</td><td class="n pl">1</td><td class="n">440</td><td class="n">17.9 KB</td><td class="n pl">1</td><td class="n">440</td><td class="n">17.9 KB</td></tr>
+          <tr class="sub"><td class="lab">Java (.java)</td><td class="n pl">—</td><td class="n">—</td><td class="n">—</td><td class="n pl">3</td><td class="n">302</td><td class="n">10.5 KB</td><td class="n pl">3</td><td class="n">302</td><td class="n">10.5 KB</td></tr>
+          <tr class="sub"><td class="lab">XML (.xml)</td><td class="n pl">—</td><td class="n">—</td><td class="n">—</td><td class="n pl">2</td><td class="n">179</td><td class="n">7.7 KB</td><td class="n pl">2</td><td class="n">179</td><td class="n">7.7 KB</td></tr>
+          <tr class="sub"><td class="lab">YAML (.yaml/.yml)</td><td class="n pl">—</td><td class="n">—</td><td class="n">—</td><td class="n pl">3</td><td class="n">73</td><td class="n">2.2 KB</td><td class="n pl">3</td><td class="n">73</td><td class="n">2.2 KB</td></tr>
+          <tr class="sub"><td class="lab">IDE module (.iml)</td><td class="n pl">—</td><td class="n">—</td><td class="n">—</td><td class="n pl">3</td><td class="n">30</td><td class="n">1.4 KB</td><td class="n pl">3</td><td class="n">30</td><td class="n">1.4 KB</td></tr>
+          <tr class="tot"><td class="lab">TOTAL</td><td class="n pl">46</td><td class="n">9,722</td><td class="n">279.8 KB</td><td class="n pl">144</td><td class="n">18,808</td><td class="n">672.9 KB</td><td class="n pl">190</td><td class="n">28,530</td><td class="n">952.7 KB</td></tr>
         </tbody>
       </table>
     </div>
