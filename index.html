@@ -92,7 +92,7 @@
 
             /* ---------- Masthead ---------- */
             header.mast {
-                padding: clamp(48px, 9vw, 120px) 0 clamp(40px, 6vw, 76px);
+                padding: clamp(18px, 2vw, 28px) 0 clamp(40px, 6vw, 76px);
                 position: relative;
             }
             .kicker {
@@ -101,7 +101,7 @@
                 letter-spacing: 0.34em;
                 text-transform: uppercase;
                 color: var(--red-ink);
-                margin: 0 0 26px;
+                margin: 0 0 calc(26px + clamp(48px, 9vw, 120px) - clamp(18px, 2vw, 28px));
                 display: flex;
                 align-items: center;
                 gap: 14px;
@@ -115,9 +115,10 @@
             h1.title {
                 font-family: var(--display);
                 font-optical-sizing: auto;
+                font-style: italic;
                 font-weight: 500;
-                font-size: clamp(52px, 13vw, 168px);
-                line-height: 0.9;
+                font-size: clamp(40px, 8vw, 96px);
+                line-height: 0.95;
                 letter-spacing: -0.02em;
                 margin: 0;
                 color: var(--ink);
@@ -125,7 +126,7 @@
             h1.title em {
                 font-style: italic;
                 font-weight: 400;
-                color: var(--red);
+                color: var(--ink);
             }
             .lede {
                 margin: clamp(28px, 4vw, 44px) 0 0;
@@ -457,8 +458,7 @@
 
             <header class="mast">
                 <p class="kicker reveal d1">My Tools & Toys · GitHub Pages</p>
-                <h1 class="title reveal d2">What have I <em>done</em>?</h1>
-                <p class="lede reveal d3">Click and use.</p>
+                <h1 class="title reveal d2">What I have <em>been doing</em>...</h1>
             </header>
 
             <main>
@@ -469,8 +469,32 @@
 
                 <ul class="ledger reveal d5">
                     <li>
-                        <a class="entry" href="./downsizer/">
+                        <a class="entry" href="./modernizer/modernize-service-workflow.html">
                             <span class="idx" aria-hidden="true">01</span>
+                            <span class="body">
+                                <span class="name">Modernizer <span class="arrow" aria-hidden="true">↗</span></span>
+                                <p class="synopsis">
+                                    A workflow blueprint: an illustrated walkthrough of how the
+                                    <code>/jmod:modernize-service</code> Claude Code command orchestrates a full Spring
+                                    Boot service modernization — and how <code>/jmod:modernize-all-services</code> fans
+                                    it out across a whole fleet. Reads like a map of the pipeline, stage by stage.
+                                </p>
+                                <ul class="tags">
+                                    <li>Blueprint</li>
+                                    <li>Claude Code</li>
+                                    <li>Spring Boot</li>
+                                    <li>Workflow</li>
+                                </ul>
+                            </span>
+                            <span class="meta">
+                                <b>Reference · jmod</b><br />
+                                Single page
+                            </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="entry" href="./downsizer/">
+                            <span class="idx" aria-hidden="true">02</span>
                             <span class="body">
                                 <span class="name">Downsizer <span class="arrow" aria-hidden="true">↗</span></span>
                                 <p class="synopsis">
@@ -493,41 +517,11 @@
                             </span>
                         </a>
                     </li>
-                    <li>
-                        <a class="entry" href="./modernizer/modernize-service-workflow.html">
-                            <span class="idx" aria-hidden="true">02</span>
-                            <span class="body">
-                                <span class="name">Modernizer <span class="arrow" aria-hidden="true">↗</span></span>
-                                <p class="synopsis">
-                                    A workflow blueprint: an illustrated walkthrough of how the
-                                    <code>/jmod:modernize-service</code> Claude Code command orchestrates a full Spring
-                                    Boot service modernization — and how <code>/jmod:modernize-all-services</code> fans
-                                    it out across a whole fleet. Reads like a map of the pipeline, stage by stage.
-                                </p>
-                                <ul class="tags">
-                                    <li>Blueprint</li>
-                                    <li>Claude Code</li>
-                                    <li>Spring Boot</li>
-                                    <li>Workflow</li>
-                                </ul>
-                            </span>
-                            <span class="meta">
-                                <b>Reference · jmod</b><br />
-                                Single page
-                            </span>
-                        </a>
-                    </li>
                 </ul>
             </main>
 
             <footer class="colophon">
-                <div class="about">
-                    <p class="sig">— P.G.</p>
-                    <p>
-                        I build infrastructure and the occasional small, sharp tool. This page is the front door to the
-                        ones worth sharing. More will land here over time.
-                    </p>
-                </div>
+                <div class="about"></div>
                 <div class="links">
                     <span class="lab">Elsewhere</span>
                     <a href="https://github.com/paulogaspar7">GitHub</a>
